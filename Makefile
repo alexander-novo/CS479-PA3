@@ -1,6 +1,6 @@
 # Upgraded to c++17 to support the Filesystem library
 # -lstdc++fs for gcc versions < 9.1
-CXXFLAGS     = -std=c++17 -lstdc++fs -g -fopenmp -O3 -D_GLIBCXX_PARALLEL
+CXXFLAGS     = -std=c++17 -lstdc++fs -fopenmp -O3 -D_GLIBCXX_PARALLEL
 OBJDIR       = obj
 DEPDIR       = $(OBJDIR)/.deps
 # Flags which, when added to gcc/g++, will auto-generate dependency files
@@ -37,8 +37,14 @@ ExperimentA/experiment: $(OBJDIR)/ExperimentA/main.o $(OBJDIR)/Common/image.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 ### Experiment Outputs ###
-out/mean.pgm: ExperimentA/experiment | out
-	ExperimentA/experiment Images/fa_H -m out/mean.pgm -o out/
+out/mean.pgm out/cmc.dat: ExperimentA/experiment | out
+	ExperimentA/experiment Images/fa_H Images/fb_H\
+		-m out/mean.pgm\
+		-o out/\
+		-cmc out/cmc.dat
+
+out/plot.pdf: ExperimentA/plot.plt out/cmc.dat
+	gnuplot -e "outfile='$@'" -e "infile='out/cmc.dat'" ExperimentA/plot.plt
 
 # Figures needed for the report
 report: 

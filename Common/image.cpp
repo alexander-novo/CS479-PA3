@@ -21,7 +21,13 @@ void read(std::istream& in, Image& im) {
 	while (in.peek() == '#') in.getline(header, 100, '\n');
 
 	in >> N;
+	if (!isspace(in.peek())) { throw std::runtime_error("Image does not have whitespace after header!"); }
+	while (isspace(in.peek())) { in.get(); }
+	while (in.peek() == '#') in.getline(header, 100, '\n');
 	in >> M;
+	if (!isspace(in.peek())) { throw std::runtime_error("Image does not have whitespace after header!"); }
+	while (isspace(in.peek())) { in.get(); }
+	while (in.peek() == '#') in.getline(header, 100, '\n');
 	in >> Q;
 	in.getline(header, 100, '\n');
 
