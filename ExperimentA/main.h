@@ -1,3 +1,5 @@
+#include <Eigen/Core>
+#include <Eigen/Eigen>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -7,7 +9,7 @@
 
 struct Arguments {
 	std::ofstream meanFile;
-	std::string imageDir;
+	std::string imageDir, outDir;
 };
 
 bool verifyArguments(int argc, char** argv, Arguments& arg, int& err);

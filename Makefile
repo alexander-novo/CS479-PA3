@@ -38,7 +38,7 @@ ExperimentA/experiment: $(OBJDIR)/ExperimentA/main.o $(OBJDIR)/Common/image.o
 
 ### Experiment Outputs ###
 out/mean.pgm: ExperimentA/experiment | out
-	ExperimentA/experiment Images/fa_H -m out/mean.pgm
+	ExperimentA/experiment Images/fa_H -m out/mean.pgm -o out/
 
 # Figures needed for the report
 report: 

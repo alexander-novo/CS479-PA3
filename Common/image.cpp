@@ -42,7 +42,7 @@ void read(std::istream& in, Image& im) {
 }
 
 // Slightly modified version of writeImage() function provided by Dr. Bebis
-void write(std::ostream& out, Image& im) {
+void write(std::ostream& out, const Image& im) {
 	out << "P5" << std::endl;
 	out << IMG_WIDTH << " " << IMG_HEIGHT << std::endl;
 	out << 255 << std::endl;
@@ -55,4 +55,17 @@ void write(std::ostream& out, Image& im) {
 	out.write(reinterpret_cast<char*>(charImage), IMG_PIXELS * sizeof(unsigned char));
 
 	if (out.fail()) throw std::runtime_error("Something failed with writing image.");
+}
+
+void normalize(Image& im, double newMax) {
+	double max = im(0, 0);
+	double min = max;
+
+#pragma omp parallel for reduction(max : max)
+	for (unsigned i = 1; i < IMG_PIXELS; i++) {
+		max = std::max(max, im(i, 0));
+		min = std::min(min, im(i, 0));
+	}
+
+	im = (im.array() - min) * newMax / (max - min);
 }

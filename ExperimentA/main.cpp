@@ -6,12 +6,13 @@ int main(int argc, char** argv) {
 
 	if (!verifyArguments(argc, argv, arg, err)) { return err; }
 
-	Image im;
+	std::vector<Image> images;
 	Image mean = Image::Zero();
 	std::ifstream inFile;
 
-	unsigned numImages = 0;
-
+	// TODO - this could be rewritten to be parallelized.
+	// Do something like loop through and store all the paths.
+	// Then come back and read. That way we also wouldn't have to unmultiply the mean each time.
 	for (auto& p : std::filesystem::directory_iterator(arg.imageDir)) {
 		if (!p.is_regular_file()) continue;
 
@@ -21,16 +22,46 @@ int main(int argc, char** argv) {
 			return 2;
 		}
 
+		images.emplace_back();
 		try {
-			read(inFile, im);
+			read(inFile, images.back());
 		} catch (std::runtime_error& e) {
 			std::cout << "Error reading " << p.path() << ":\n" << e.what() << std::endl;
 			return 2;
 		}
 		inFile.close();
 
-		mean = mean * (numImages / ((double) numImages + 1)) + im / (numImages + 1);
-		++numImages;
+		unsigned numImages = images.size();
+		mean               = mean * (((double) numImages - 1) / numImages) + images.back() / numImages;
+	}
+
+	Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A(IMG_PIXELS, images.size());
+
+#pragma omp parallel for
+	for (unsigned i = 0; i < images.size(); i++) { A.col(i) = images[i] - mean; }
+
+	Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> covariance = A * A.transpose() / images.size();
+	Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> solver(covariance);
+	Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> eigenVectors = solver.eigenvectors();
+
+#pragma omp parallel
+	{
+#pragma omp for nowait
+		for (unsigned i = 0; i < 10; i++) {
+			std::ofstream out(arg.outDir + "/smallest_eigenface_" + std::to_string(i + 1) + ".pgm");
+
+			Image img = eigenVectors.col(i);
+			normalize(img, 255);
+			write(out, img);
+		}
+#pragma omp for
+		for (unsigned i = 0; i < 10; i++) {
+			std::ofstream out(arg.outDir + "/largest_eigenface_" + std::to_string(i + 1) + ".pgm");
+
+			Image img = eigenVectors.col(IMG_PIXELS - i - 1);
+			normalize(img, 255);
+			write(out, img);
+		}
 	}
 
 	if (arg.meanFile) { write(arg.meanFile, mean); }
@@ -83,6 +114,22 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 			}
 
 			i++;
+		} else if (!strcmp(argv[i], "-o")) {
+			if (i + 1 >= argc) {
+				std::cout << "Missing output directory.\n\n";
+				err = 1;
+				printHelp();
+				return false;
+			}
+
+			arg.outDir = argv[i + 1];
+			if (!std::filesystem::is_directory(arg.outDir)) {
+				std::cout << "Directory \"" << arg.outDir << "\" does not exist.";
+				err = 2;
+				return false;
+			}
+
+			i++;
 		} else {
 			std::cout << "Unrecognised argument \"" << argv[i] << "\".\n";
 			printHelp();
@@ -99,5 +146,6 @@ void printHelp() {
 	          << "(1) Run the experiment on the given directory of images.\n"
 	          << "(2) Print this help menu.\n\n"
 	          << "OPTIONS\n"
-	          << "  -m   <file>  Print the mean face to a file.\n";
+	          << "  -m   <file>  Print the mean face to a file.\n"
+	          << "  -o    <dir>  Output eigenfaces to this directory.\n";
 }

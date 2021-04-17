@@ -10,4 +10,5 @@
 using Image = Eigen::Matrix<double, IMG_PIXELS, 1>;
 
 void read(std::istream& in, Image& im);
-void write(std::ostream& out, Image& im);
+void write(std::ostream& out, const Image& im);
+void normalize(Image& im, double newMax);
