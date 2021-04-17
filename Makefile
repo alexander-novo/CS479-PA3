@@ -1,6 +1,5 @@
 # Upgraded to c++17 to support the Filesystem library
-# -lstdc++fs for gcc versions < 9.1
-CXXFLAGS     = -std=c++17 -lstdc++fs -fopenmp -O3 -D_GLIBCXX_PARALLEL
+CXXFLAGS     = -std=c++17 -fopenmp -O3 -D_GLIBCXX_PARALLEL
 OBJDIR       = obj
 DEPDIR       = $(OBJDIR)/.deps
 # Flags which, when added to gcc/g++, will auto-generate dependency files

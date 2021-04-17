@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
 	}
 
 	std::cout << "Reduced to " << lowerDimensions << " dimensions for a total of "
-	          << (totalEigenSum * EIGEN_PRESERVE - targetEigenSum) / totalEigenSum * 100 << "% power\n";
+	          << (totalEigenSum * EIGEN_PRESERVE - targetEigenSum) / totalEigenSum * 100 << "% information\n";
 
 	auto U = eigenVectors.rightCols(lowerDimensions);
 	std::vector<Eigen::VectorXd> projectedTrainingImages(testingImages.size(), Eigen::VectorXd(lowerDimensions, 1)),
@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
 	{
 #pragma omp for nowait
 		for (unsigned i = 0; i < projectedTrainingImages.size(); i++) {
-			projectedTrainingImages[i] = U.transpose() * (testingImages[i] - mean);
+			projectedTrainingImages[i] = U.transpose() * (trainingImages[i] - mean);
 		}
 #pragma omp for
 		for (unsigned i = 0; i < projectedTestingImages.size(); i++) {
@@ -114,40 +114,42 @@ int main(int argc, char** argv) {
 
 		// The N value required to correctly classify each image
 		std::vector<unsigned> NRequired(testingImages.size());
-		unsigned workMarker = projectedTestingImages.size() / 50;
-		unsigned workDone   = 0;
 
 // Can't collapse this loop since we need a fresh queue for each i iteration.
 #pragma omp parallel for
 		for (unsigned i = 0; i < projectedTestingImages.size(); i++) {
-			MaxHeap queue;
+			std::vector<DistanceLabel> heap;
 			double distance;
 
 			// For our first 50 distances, just insert into the heap
 			for (unsigned j = 0; j < MAX_N; j++) {
 				distance = mahalanobisDistance(projectedTestingImages[i], projectedTrainingImages[j], eigenValues);
-				queue.push({distance, j});
+				heap.push_back({distance, j});
 			}
+
+			std::make_heap(heap.begin(), heap.end());
 
 			// Afterwards, keep the size constant and only insert if needed
 			for (unsigned j = MAX_N; j < projectedTrainingImages.size(); j++) {
 				distance = mahalanobisDistance(projectedTestingImages[i], projectedTrainingImages[j], eigenValues);
-				if (distance < queue.top().first) {
-					queue.pop();
-					queue.push({distance, j});
+				if (distance < heap.front().first) {
+					std::pop_heap(heap.begin(), heap.end());
+					heap.back() = {distance, j};
+					std::push_heap(heap.begin(), heap.end());
 				}
 			}
 
-			while (!queue.empty()) {
-				if (trainingLabels[queue.top().second] != testingLabels[i]) {
-					queue.pop();
-				} else {
-					NRequired[i] = MAX_N - queue.size() + 1;
+			std::sort_heap(heap.begin(), heap.end());
+
+			unsigned j;
+			for (j = 0; j < heap.size(); j++) {
+				if (trainingLabels[heap[j].second] == testingLabels[i]) {
+					NRequired[i] = j + 1;
 					break;
 				}
 			}
 
-			if (queue.empty()) { NRequired[i] = MAX_N + 1; }
+			if (j == heap.size()) { NRequired[i] = MAX_N + 1; }
 		}
 
 		arg.cmcPlotFile << "# N   Performance\n";
@@ -191,7 +193,7 @@ double mahalanobisDistance(const Eigen::VectorXd& im1, const Eigen::VectorXd& im
 	for (unsigned i = 0; i < dim; i++) {
 		unsigned idx = dim - i - 1;
 		double temp  = im1(idx, 0) - im2(idx, 0);
-		distance += temp * temp / eigenValues(idx, 0);
+		distance += temp * temp / eigenValues(eigenValues.rows() - i - 1, 0);
 	}
 
 	return distance;
