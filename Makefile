@@ -16,7 +16,7 @@ INCLUDES     = -I include/
 # Executable targets - add more to auto-make in default 'all' target
 EXEC         = ExperimentA/experiment
 # Targets required for the homework, spearated by part
-REQUIRED_1   = 
+REQUIRED_1   = out/mean.png
 REQUIRED_2   = 
 REQUIRED_OUT = $(REQUIRED_1) $(REQUIRED_2)
 
@@ -36,8 +36,9 @@ exec: $(EXEC)
 ExperimentA/experiment: $(OBJDIR)/ExperimentA/main.o $(OBJDIR)/Common/image.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-### Experiment 3 Outputs ###
-
+### Experiment Outputs ###
+out/mean.pgm: ExperimentA/experiment | out
+	ExperimentA/experiment Images/fa_H -m out/mean.pgm
 
 # Figures needed for the report
 report: 
