@@ -3,12 +3,15 @@
 
 #include <Eigen/Core>
 
-#define IMG_WIDTH 48
-#define IMG_HEIGHT 60
-#define IMG_PIXELS (IMG_WIDTH * IMG_HEIGHT)
+using Eigen::VectorXd;
+using Image = VectorXd;
 
-using Image = Eigen::Matrix<double, IMG_PIXELS, 1>;
+struct ImageHeader {
+	char magicNumber[3];
+	unsigned M, N, Q;
+};
 
-void read(std::istream& in, Image& im);
-void write(std::ostream& out, const Image& im);
-void normalize(Image& im, double newMax);
+ImageHeader readHeader(std::istream& in);
+void read(std::istream& in, Image& im, ImageHeader match);
+void write(std::ostream& out, const Image& im, ImageHeader header);
+void normalize(Image& im, ImageHeader header);

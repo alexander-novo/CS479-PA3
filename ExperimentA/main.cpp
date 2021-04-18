@@ -7,7 +7,6 @@ int main(int argc, char** argv) {
 	if (!verifyArguments(argc, argv, arg, err)) { return err; }
 
 	std::vector<std::filesystem::path> trainingImagePaths, testingImagePaths;
-	Image mean = Image::Zero();
 	std::ifstream inFile;
 
 	// Read in all of the image names in the training and testing directories
@@ -29,12 +28,17 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	std::ifstream init(trainingImagePaths.front());
+	ImageHeader header   = readHeader(init);
+	unsigned imagePixels = header.M * header.N;
+
 	// Read in all the images - training and testing - and their labels
-	std::vector<Image, Eigen::aligned_allocator<Image>> trainingImages(trainingImagePaths.size()),
-	    testingImages(testingImagePaths.size());
+	std::vector<Image> trainingImages(trainingImagePaths.size(), Image(imagePixels)),
+	    testingImages(testingImagePaths.size(), Image(imagePixels));
 	std::vector<std::string> trainingLabels(trainingImages.size()), testingLabels(testingImages.size());
 	// https://regex101.com/r/YmCEZ3/1
 	std::regex labelRegex("([[:digit:]]{5})_[[:digit:]]{2}[[:digit:]]{2}[[:digit:]]{2}_f[ab](_a)?.pgm");
+	Image mean = Image::Zero(imagePixels);
 #pragma omp parallel
 	{
 		std::ifstream inFile;
@@ -44,7 +48,7 @@ int main(int argc, char** argv) {
 			inFile.open(trainingImagePaths[i]);
 
 			Image& im = trainingImages[i];
-			read(inFile, im);
+			read(inFile, im, header);
 
 			inFile.close();
 
@@ -59,7 +63,7 @@ int main(int argc, char** argv) {
 			inFile.open(testingImagePaths[i]);
 
 			Image& im = testingImages[i];
-			read(inFile, im);
+			read(inFile, im, header);
 			inFile.close();
 
 			std::string filename = testingImagePaths[i].filename();
@@ -68,7 +72,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	Eigen::MatrixXd A(IMG_PIXELS, trainingImages.size());
+	Eigen::MatrixXd A(imagePixels, trainingImages.size());
 
 #pragma omp parallel for
 	for (unsigned i = 0; i < trainingImages.size(); i++) { A.col(i) = trainingImages[i] - mean; }
@@ -170,21 +174,21 @@ int main(int argc, char** argv) {
 				std::ofstream out(arg.outDir + "/smallest_eigenface_" + std::to_string(i + 1) + ".pgm");
 
 				Image img = eigenVectors.col(i);
-				normalize(img, 255);
-				write(out, img);
+				normalize(img, header);
+				write(out, img, header);
 			}
 #pragma omp for
 			for (unsigned i = 0; i < 10; i++) {
 				std::ofstream out(arg.outDir + "/largest_eigenface_" + std::to_string(i + 1) + ".pgm");
 
 				Image img = eigenVectors.col(trainingImages.size() - i - 1);
-				normalize(img, 255);
-				write(out, img);
+				normalize(img, header);
+				write(out, img, header);
 			}
 		}
 	}
 
-	if (arg.meanFile) { write(arg.meanFile, mean); }
+	if (arg.meanFile) { write(arg.meanFile, mean, header); }
 }
 
 double mahalanobisDistance(const Eigen::VectorXd& im1, const Eigen::VectorXd& im2, const Eigen::VectorXd& eigenValues) {

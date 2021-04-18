@@ -1,10 +1,39 @@
 // Common/image.cpp
 #include "image.h"
 
-// SPECIFICALLY OPTIMIZED FOR KNOWN IMAGE SIZE
-void read(std::istream& in, Image& im) {
-	int N, M, Q;
-	unsigned char charImage[IMG_PIXELS];
+ImageHeader readHeader(std::istream& in) {
+	ImageHeader re;
+	char buf[200];
+
+	using namespace std::string_literals;
+
+	// Read magic number in header
+	in.get(re.magicNumber, 3);
+	if ((re.magicNumber[0] != 'P') || (re.magicNumber[1] != '5')) {
+		throw std::runtime_error("Image is not PGM! Detected header: "s + re.magicNumber[0] + re.magicNumber[1]);
+	}
+
+	// Skip any whitespace and then any comments
+	if (!isspace(in.peek())) { throw std::runtime_error("Image does not have whitespace after header!"); }
+	while (isspace(in.peek())) { in.get(); }
+	while (in.peek() == '#') in.getline(buf, 200, '\n');
+
+	in >> re.N;
+	if (!isspace(in.peek())) { throw std::runtime_error("Image does not have whitespace after header!"); }
+	while (isspace(in.peek())) { in.get(); }
+	while (in.peek() == '#') in.getline(buf, 200, '\n');
+	in >> re.M;
+	if (!isspace(in.peek())) { throw std::runtime_error("Image does not have whitespace after header!"); }
+	while (isspace(in.peek())) { in.get(); }
+	while (in.peek() == '#') in.getline(buf, 200, '\n');
+	in >> re.Q;
+
+	return re;
+}
+
+void read(std::istream& in, Image& im, ImageHeader match) {
+	unsigned M, N, Q;
+	unsigned char* charImage;
 	char header[100], *ptr;
 
 	using namespace std::string_literals;
@@ -31,47 +60,43 @@ void read(std::istream& in, Image& im) {
 	in >> Q;
 	in.getline(header, 100, '\n');
 
-	if (N != IMG_WIDTH) {
-		throw std::runtime_error("Image width does not match ("s + std::to_string(N) + " v.s. "s +
-		                         std::to_string(IMG_WIDTH) + ")"s);
-	} else if (M != IMG_HEIGHT) {
-		throw std::runtime_error("Image height does not match ("s + std::to_string(M) + " v.s. "s +
-		                         std::to_string(IMG_HEIGHT) + ")"s);
-	}
-
+	if (N != match.N || M != match.M || Q != match.Q)
+		throw std::runtime_error("Read Image does not match given header.");
 	if (Q > 255) throw std::runtime_error("Image cannot be read correctly (Q > 255)!");
 
-	in.read(reinterpret_cast<char*>(charImage), IMG_PIXELS * sizeof(unsigned char));
+	charImage = new unsigned char[M * N];
+	in.read(reinterpret_cast<char*>(charImage), M * N * sizeof(unsigned char));
 
+	im = Image(match.M * match.N);
 #pragma omp parallel for
-	for (unsigned i = 0; i < IMG_PIXELS; i++) { im(i, 0) = charImage[i]; }
+	for (unsigned i = 0; i < M * N; i++) { im(i, 0) = charImage[i]; }
 }
 
 // Slightly modified version of writeImage() function provided by Dr. Bebis
-void write(std::ostream& out, const Image& im) {
-	out << "P5" << std::endl;
-	out << IMG_WIDTH << " " << IMG_HEIGHT << std::endl;
-	out << 255 << std::endl;
+void write(std::ostream& out, const Image& im, ImageHeader header) {
+	out << header.magicNumber << std::endl;
+	out << header.N << " " << header.M << std::endl;
+	out << header.Q << std::endl;
 
-	unsigned char charImage[IMG_PIXELS];
+	unsigned char* charImage = new unsigned char[header.M * header.N];
 
 #pragma omp parallel for
-	for (unsigned i = 0; i < IMG_PIXELS; i++) { charImage[i] = im(i, 0); }
+	for (unsigned i = 0; i < header.M * header.N; i++) { charImage[i] = im(i, 0); }
 
-	out.write(reinterpret_cast<char*>(charImage), IMG_PIXELS * sizeof(unsigned char));
+	out.write(reinterpret_cast<char*>(charImage), header.M * header.N * sizeof(unsigned char));
 
 	if (out.fail()) throw std::runtime_error("Something failed with writing image.");
 }
 
-void normalize(Image& im, double newMax) {
+void normalize(Image& im, ImageHeader header) {
 	double max = im(0, 0);
 	double min = max;
 
 #pragma omp parallel for reduction(max : max)
-	for (unsigned i = 1; i < IMG_PIXELS; i++) {
+	for (unsigned i = 1; i < header.M * header.N; i++) {
 		max = std::max(max, im(i, 0));
 		min = std::min(min, im(i, 0));
 	}
 
-	im = (im.array() - min) * newMax / (max - min);
+	im = (im.array() - min) * header.Q / (max - min);
 }
