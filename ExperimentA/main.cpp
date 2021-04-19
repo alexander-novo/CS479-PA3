@@ -131,7 +131,6 @@ void test(Arguments& arg) {
 		// The N value required to correctly classify each image
 		std::vector<unsigned> NRequired(projectedTestingImages.cols());
 
-// Can't collapse this loop since we need a fresh queue for each i iteration.
 #pragma omp parallel
 		{
 			std::vector<DistanceLabel> heap(MAX_N);
