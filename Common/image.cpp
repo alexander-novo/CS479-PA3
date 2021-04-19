@@ -31,7 +31,7 @@ ImageHeader readHeader(std::istream& in) {
 	return re;
 }
 
-void read(std::istream& in, Image& im, ImageHeader match) {
+void read(std::istream& in, Eigen::Block<MatrixXd, -1, 1> im, ImageHeader match) {
 	unsigned M, N, Q;
 	unsigned char* charImage;
 	char header[100], *ptr;
@@ -41,7 +41,7 @@ void read(std::istream& in, Image& im, ImageHeader match) {
 	// Read magic number in header
 	in.get(header, 3);
 	if ((header[0] != 'P') || (header[1] != '5')) {
-		throw std::runtime_error("Image is not PGM! Detected header: "s + header[0] + header[1]);
+		throw std::runtime_error("Image is not PGM! Detected header: '"s + header[0] + header[1] + "'"s);
 	}
 
 	// Skip any whitespace and then any comments
@@ -67,13 +67,12 @@ void read(std::istream& in, Image& im, ImageHeader match) {
 	charImage = new unsigned char[M * N];
 	in.read(reinterpret_cast<char*>(charImage), M * N * sizeof(unsigned char));
 
-	im = Image(match.M * match.N);
 #pragma omp parallel for
-	for (unsigned i = 0; i < M * N; i++) { im(i, 0) = charImage[i]; }
+	for (unsigned i = 0; i < M * N; i++) { im(i) = charImage[i]; }
 }
 
 // Slightly modified version of writeImage() function provided by Dr. Bebis
-void write(std::ostream& out, const Image& im, ImageHeader header) {
+void write(std::ostream& out, const VectorXd& im, ImageHeader header) {
 	out << header.magicNumber << std::endl;
 	out << header.N << " " << header.M << std::endl;
 	out << header.Q << std::endl;
@@ -81,21 +80,21 @@ void write(std::ostream& out, const Image& im, ImageHeader header) {
 	unsigned char* charImage = new unsigned char[header.M * header.N];
 
 #pragma omp parallel for
-	for (unsigned i = 0; i < header.M * header.N; i++) { charImage[i] = im(i, 0); }
+	for (unsigned i = 0; i < header.M * header.N; i++) { charImage[i] = im(i); }
 
 	out.write(reinterpret_cast<char*>(charImage), header.M * header.N * sizeof(unsigned char));
 
 	if (out.fail()) throw std::runtime_error("Something failed with writing image.");
 }
 
-void normalize(Image& im, ImageHeader header) {
-	double max = im(0, 0);
+void normalize(VectorXd& im, ImageHeader header) {
+	double max = im(0);
 	double min = max;
 
-#pragma omp parallel for reduction(max : max)
-	for (unsigned i = 1; i < header.M * header.N; i++) {
-		max = std::max(max, im(i, 0));
-		min = std::min(min, im(i, 0));
+#pragma omp parallel for reduction(max : max) reduction(min : min)
+	for (unsigned i = 1; i < im.rows(); i++) {
+		max = std::max(max, im(i));
+		min = std::min(min, im(i));
 	}
 
 	im = (im.array() - min) * header.Q / (max - min);
