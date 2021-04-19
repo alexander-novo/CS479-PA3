@@ -48,6 +48,8 @@ void train(Arguments& arg) {
 	// Multiply by A to get eigenvectors of A*A^T instead of A^T*A
 	MatrixXd U = A * solver.eigenvectors();
 
+	U.colwise().normalize();
+
 	MatrixXd projectedImages = U.transpose() * (images.colwise() - mean);
 
 	writeTrainingData(arg.trainingFile, header, mean, U, solver.eigenvalues(), projectedImages, labels);
