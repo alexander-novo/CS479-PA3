@@ -120,61 +120,78 @@ void test(Arguments& arg) {
 	          << (totalEigenSum * arg.infoPercent - targetEigenSum) / totalEigenSum * 100 << "% information\n";
 
 	MatrixXd projectedTestingImages = U.rightCols(lowerDimensions).transpose() * (testingImages.colwise() - mean);
+	std::vector<std::pair<unsigned, unsigned>> correct_matches, incorrect_matches;
 
 	auto lowerDimTrainingImages = projectedTrainingImages.bottomRows(lowerDimensions);
 	auto lowerDimEigenValues    = eigenValues.tail(lowerDimensions);
 
-	if (arg.cmcPlotFile.is_open() && arg.cmcPlotFile) {
 #define MAX_N 50
-		using DistanceLabel = std::pair<double, unsigned>;
+	using DistanceLabel = std::pair<double, unsigned>;
 
-		// The N value required to correctly classify each image
-		std::vector<unsigned> NRequired(projectedTestingImages.cols());
+	// The N value required to correctly classify each image
+	std::vector<unsigned> NRequired(projectedTestingImages.cols());
+	std::vector<std::string> classifiedLabels(testingImages.cols());
+	std::vector<unsigned> bestTrainingImages(testingImages.cols());
 
-// Can't collapse this loop since we need a fresh queue for each i iteration.
 #pragma omp parallel
-		{
-			std::vector<DistanceLabel> heap(MAX_N);
+	{
+		std::vector<DistanceLabel> heap(MAX_N);
 #pragma omp for
-			for (unsigned i = 0; i < projectedTestingImages.cols(); i++) {
-				double distance;
+		for (unsigned i = 0; i < projectedTestingImages.cols(); i++) {
+			double distance;
 
-				// For our first 50 distances, just insert into the heap
-				for (unsigned j = 0; j < MAX_N; j++) {
-					distance = mahalanobisDistance(projectedTestingImages.col(i), lowerDimTrainingImages.col(j),
-					                               lowerDimEigenValues);
+			// For our first 50 distances, just insert into the heap
+			for (unsigned j = 0; j < MAX_N; j++) {
+				distance = mahalanobisDistance(projectedTestingImages.col(i), lowerDimTrainingImages.col(j),
+				                               lowerDimEigenValues);
 
-					heap[j] = {distance, j};
-				}
-
-				std::make_heap(heap.begin(), heap.end());
-
-				// Afterwards, keep the size constant and only insert if needed
-				for (unsigned j = MAX_N; j < lowerDimTrainingImages.cols(); j++) {
-					distance = mahalanobisDistance(projectedTestingImages.col(i), lowerDimTrainingImages.col(j),
-					                               lowerDimEigenValues);
-
-					if (distance < heap.front().first) {
-						std::pop_heap(heap.begin(), heap.end());
-						heap.back() = {distance, j};
-						std::push_heap(heap.begin(), heap.end());
-					}
-				}
-
-				std::sort_heap(heap.begin(), heap.end());
-
-				unsigned j;
-				for (j = 0; j < heap.size(); j++) {
-					if (trainingLabels[heap[j].second] == testingLabels[i]) {
-						NRequired[i] = j + 1;
-						break;
-					}
-				}
-
-				if (j == heap.size()) { NRequired[i] = MAX_N + 1; }
+				heap[j] = {distance, j};
 			}
-		}
 
+			std::make_heap(heap.begin(), heap.end());
+
+			// Afterwards, keep the size constant and only insert if needed
+			for (unsigned j = MAX_N; j < lowerDimTrainingImages.cols(); j++) {
+				distance = mahalanobisDistance(projectedTestingImages.col(i), lowerDimTrainingImages.col(j),
+				                               lowerDimEigenValues);
+
+				if (distance < heap.front().first) {
+					std::pop_heap(heap.begin(), heap.end());
+					heap.back() = {distance, j};
+					std::push_heap(heap.begin(), heap.end());
+				}
+			}
+
+			std::sort_heap(heap.begin(), heap.end());
+
+			classifiedLabels[i]   = trainingLabels[heap[0].second];
+			bestTrainingImages[i] = heap[0].second;
+
+			unsigned j;
+			for (j = 0; j < heap.size(); j++) {
+				if (trainingLabels[heap[j].second] == testingLabels[i]) {
+					NRequired[i] = j + 1;
+					break;
+				}
+			}
+
+			if (j == heap.size()) { NRequired[i] = MAX_N + 1; }
+		}
+	}
+
+	// Store correctly and incorrectly matched query images for which N = 1
+	for (unsigned i = 0; i < testingImages.cols(); ++i) {
+		if (classifiedLabels[i] == testingLabels[i]) {
+			correct_matches.push_back({i, bestTrainingImages[i]});
+		} else {
+			incorrect_matches.push_back({i, bestTrainingImages[i]});
+		}
+	}
+	std::cout << "Assuming N=1, Correct matches: " << correct_matches.size() << std::endl;
+	std::cout << "Assuming N=1, Incorrect matches: " << incorrect_matches.size() << std::endl;
+	std::cout << "Total Size: " << testingImages.size() << std::endl;
+
+	if (arg.cmcPlotFile.is_open() && arg.cmcPlotFile) {
 		arg.cmcPlotFile << "# N   Performance\n";
 		unsigned correctMatches = 0;
 		for (unsigned i = 0; i < MAX_N; i++) {
@@ -183,6 +200,40 @@ void test(Arguments& arg) {
 			                << '\n';
 		}
 		arg.cmcPlotFile.close();
+	}
+
+#pragma omp parallel
+	{
+#pragma omp for nowait
+		for (unsigned i = 0; i < 3; i++) {
+			std::ofstream out(arg.outDir + "correct-" + std::to_string(i + 1) + "-train.pgm");
+
+			VectorXd img = U * projectedTrainingImages.col(correct_matches[i].second);
+			normalize(img, header);
+			write(out, img, header);
+		}
+#pragma omp for nowait
+		for (unsigned i = 0; i < 3; i++) {
+			std::ofstream out(arg.outDir + "correct-" + std::to_string(i + 1) + "-test.pgm");
+
+			VectorXd img = testingImages.col(correct_matches[i].first);
+			write(out, img, header);
+		}
+#pragma omp for nowait
+		for (unsigned i = 0; i < 3; i++) {
+			std::ofstream out(arg.outDir + "incorrect-" + std::to_string(i + 1) + "-train.pgm");
+
+			VectorXd img = U * projectedTrainingImages.col(incorrect_matches[i].second);
+			normalize(img, header);
+			write(out, img, header);
+		}
+#pragma omp for
+		for (unsigned i = 0; i < 3; i++) {
+			std::ofstream out(arg.outDir + "incorrect-" + std::to_string(i + 1) + "-test.pgm");
+
+			VectorXd img = testingImages.col(incorrect_matches[i].first);
+			write(out, img, header);
+		}
 	}
 }
 
@@ -469,6 +520,17 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					}
 
 					i++;
+				} else if (!strcmp(argv[i], "-img")) {
+					if (i + 1 >= argc) {
+						std::cout << "Missing output image prefix.\n\n";
+						err = 1;
+						printHelp();
+						return false;
+					}
+
+					arg.outDir = argv[i + 1];
+
+					i++;
 				} else {
 					std::cout << "Unrecognised argument \"" << argv[i] << "\".\n";
 					printHelp();
@@ -501,5 +563,7 @@ void printHelp() {
 	          << "TESTING OPTIONS\n"
 	          << "  -cmc <file>  Print CMC plot data to a file.\n"
 	          << "  -i   <num>   The percentage of information to be preserved when picking\n"
-	          << "               eigenfaces. Defaults to " << arg.infoPercent * 100 << "%.\n";
+	          << "               eigenfaces. Defaults to " << arg.infoPercent * 100 << "%.\n"
+	          << "  -img <pre>   Output images which were classified correctly and incorrectly\n"
+	          << "               with the given prefix.\n";
 }

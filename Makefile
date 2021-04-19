@@ -1,5 +1,5 @@
 # Upgraded to c++17 to support the Filesystem library
-CXXFLAGS     = -std=c++17 -fopenmp -O3 -D_GLIBCXX_PARALLEL
+CXXFLAGS     = -std=c++17 -fopenmp -O3 -D_GLIBCXX_PARALLEL -g
 OBJDIR       = obj
 DEPDIR       = $(OBJDIR)/.deps
 # Flags which, when added to gcc/g++, will auto-generate dependency files
@@ -49,7 +49,7 @@ out/eigenface-%-largest-1.pgm: ExperimentA/experiment out/training-%.dat
 
 .SECONDEXPANSION:
 out/cmc-%.dat: ExperimentA/experiment out/training-$$(word 1,$$(subst -, ,$$*)).dat
-	ExperimentA/experiment test Images/fb_$(word 1,$(subst -, ,$*)) out/training-$(word 1,$(subst -, ,$*)).dat -i $(word 2,$(subst -, ,$*)) -cmc $@
+	ExperimentA/experiment test Images/fb_$(word 1,$(subst -, ,$*)) out/training-$(word 1,$(subst -, ,$*)).dat -i $(word 2,$(subst -, ,$*)) -cmc $@ -img out/classification-$*-
 
 .SECONDEXPANSION:
 out/compare-%.pdf: ExperimentA/plot.plt out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 2,$$(subst -, ,$$*)).dat out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 3,$$(subst -, ,$$*)).dat out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 4,$$(subst -, ,$$*)).dat
