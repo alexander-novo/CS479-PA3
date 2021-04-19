@@ -189,7 +189,7 @@ void test(Arguments& arg) {
 	}
 	std::cout << "Assuming N=1, Correct matches: " << correct_matches.size() << std::endl;
 	std::cout << "Assuming N=1, Incorrect matches: " << incorrect_matches.size() << std::endl;
-	std::cout << "Total Size: " << testingImages.size() << std::endl;
+	std::cout << "Total Size: " << testingImages.cols() << std::endl;
 
 	if (arg.cmcPlotFile.is_open() && arg.cmcPlotFile) {
 		arg.cmcPlotFile << "# N   Performance\n";
