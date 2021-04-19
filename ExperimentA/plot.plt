@@ -8,4 +8,4 @@ set output outfile
 set xlabel 'N'
 set key inside top left
 
-plot infile u 1:2 w linespoints
+plot infile1 w linespoints title title1, infile2 w linespoints title title2, infile3 w linespoints title title3

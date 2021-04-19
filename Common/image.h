@@ -3,8 +3,8 @@
 
 #include <Eigen/Core>
 
+using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 using Eigen::VectorXd;
-using Image = VectorXd;
 
 struct ImageHeader {
 	char magicNumber[3];
@@ -12,6 +12,6 @@ struct ImageHeader {
 };
 
 ImageHeader readHeader(std::istream& in);
-void read(std::istream& in, Image& im, ImageHeader match);
-void write(std::ostream& out, const Image& im, ImageHeader header);
-void normalize(Image& im, ImageHeader header);
+void read(std::istream& in, Eigen::Block<MatrixXd, -1, 1> im, ImageHeader match);
+void write(std::ostream& out, const VectorXd& im, ImageHeader header);
+void normalize(VectorXd& im, ImageHeader header);
