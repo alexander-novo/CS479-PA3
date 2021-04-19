@@ -98,6 +98,7 @@ int main(int argc, char** argv) {
 	auto U = eigenVectors.rightCols(lowerDimensions);
 	std::vector<Eigen::VectorXd> projectedTrainingImages(testingImages.size(), Eigen::VectorXd(lowerDimensions, 1)),
 	    projectedTestingImages(testingImages.size(), Eigen::VectorXd(lowerDimensions, 1));
+	std::vector<std::pair<unsigned, unsigned>> correct_matches, incorrect_matches; // <testID, trainID>
 
 #pragma omp parallel
 	{
@@ -118,6 +119,8 @@ int main(int argc, char** argv) {
 
 		// The N value required to correctly classify each image
 		std::vector<unsigned> NRequired(testingImages.size());
+		std::vector<std::string> classifiedLabels(testingImages.size());
+		std::vector<unsigned> bestTrainingImages(testingImages.size());
 
 // Can't collapse this loop since we need a fresh queue for each i iteration.
 #pragma omp parallel for
@@ -143,7 +146,11 @@ int main(int argc, char** argv) {
 				}
 			}
 
+			// Sort the DistanceLabels in ascending order
 			std::sort_heap(heap.begin(), heap.end());
+			// Store the smallest distance as the classified label
+			classifiedLabels[i] = trainingLabels[heap[0].second];
+			bestTrainingImages[i] = heap[0].second;
 
 			unsigned j;
 			for (j = 0; j < heap.size(); j++) {
@@ -164,6 +171,19 @@ int main(int argc, char** argv) {
 			                << '\n';
 		}
 		arg.cmcPlotFile.close();
+
+		// Store correctly and incorrectly matched query images for which N = 1
+		for (unsigned i = 0; i < testingImages.size(); ++i){
+			if (classifiedLabels[i] == testingLabels[i]){
+				correct_matches.push_back({i, bestTrainingImages[i]});
+			}
+			else{
+				incorrect_matches.push_back({i, bestTrainingImages[i]});
+			}
+		}
+		std::cout << "Assuming N=1, Correct matches: " << correct_matches.size() << std::endl;
+		std::cout << "Assuming N=1, Incorrect matches: " << incorrect_matches.size() << std::endl;
+		std::cout << "Total Size: " << testingImages.size() << std::endl;
 	}
 
 	if (!arg.outDir.empty()) {
@@ -183,6 +203,34 @@ int main(int argc, char** argv) {
 
 				Image img = eigenVectors.col(trainingImages.size() - i - 1);
 				normalize(img, header);
+				write(out, img, header);
+			}
+#pragma omp for
+			for (unsigned i = 0; i < 3; i++) {
+				std::ofstream out(arg.outDir + "/correct_classification_training_image_" + std::to_string(i + 1) + ".pgm");
+
+				Image img = trainingImages[correct_matches[i].second];
+				write(out, img, header);
+			}
+#pragma omp for
+			for (unsigned i = 0; i < 3; i++) {
+				std::ofstream out(arg.outDir + "/correct_classification_test_image_" + std::to_string(i + 1) + ".pgm");
+
+				Image img = testingImages[correct_matches[i].first];
+				write(out, img, header);
+			}
+#pragma omp for
+			for (unsigned i = 0; i < 3; i++) {
+				std::ofstream out(arg.outDir + "/incorrect_classification_training_image_" + std::to_string(i + 1) + ".pgm");
+
+				Image img = trainingImages[incorrect_matches[i].second];
+				write(out, img, header);
+			}
+#pragma omp for
+			for (unsigned i = 0; i < 3; i++) {
+				std::ofstream out(arg.outDir + "/incorrect_classification_test_image_" + std::to_string(i + 1) + ".pgm");
+
+				Image img = testingImages[incorrect_matches[i].first];
 				write(out, img, header);
 			}
 		}
