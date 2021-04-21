@@ -60,10 +60,11 @@ out/compare-%.pdf: ExperimentA/plot.plt out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(
 			-e "title1='$(word 2,$(subst -, ,$*))%'"\
 			-e "title2='$(word 3,$(subst -, ,$*))%'"\
 			-e "title3='$(word 4,$(subst -, ,$*))%'"\
+			-e "dataSet='$(word 1,$(subst -, ,$*))'"\
 	        ExperimentA/plot.plt
 
 # Figures needed for the report
-report: out/mean-H.png out/compare-H-80-90-95.pdf
+report: out/mean-H.png out/compare-H-80-90-95.pdf out/mean-L.png out/compare-L-80-90-95.pdf
 
 Report/report.pdf: Report/report.tex report
 	latexmk -pdf -cd -use-make -silent -pdflatex='pdflatex -interaction=batchmode -synctex=1' $<
@@ -72,7 +73,7 @@ clean:
 	rm -rf $(OBJDIR)
 	rm -f $(EXEC)
 	rm -rf out
-	rm -f Images/*.png
+	rm -f Images/**.png
 	cd Report/; latexmk -c
 
 # Generate .png images from .pgm images. Needed for report, since pdfLaTeX doesn't support .pgm images
