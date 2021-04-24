@@ -103,7 +103,7 @@ void test(Arguments& arg) {
 
 	getFilesPathsInDir(testingImagePaths, arg.imageDir);
 
-	// Read in all the training images and their labels
+	// Read in all the testing images and their labels
 	MatrixXd testingImages(imagePixels, testingImagePaths.size());
 	std::vector<std::string> testingLabels(testingImagePaths.size());
 
@@ -204,38 +204,31 @@ void test(Arguments& arg) {
 		arg.cmcPlotFile.close();
 	}
 
-#pragma omp parallel
+#pragma omp critical
 	{
-#pragma omp for nowait
-		for (unsigned i = 0; i < 3; i++) {
-			std::ofstream out(arg.outDir + "correct-" + std::to_string(i + 1) + "-train.pgm");
-
-			VectorXd img = U * projectedTrainingImages.col(correct_matches[i].second);
-			normalize(img, header);
-			write(out, img, header);
-		}
-#pragma omp for nowait
-		for (unsigned i = 0; i < 3; i++) {
-			std::ofstream out(arg.outDir + "correct-" + std::to_string(i + 1) + "-test.pgm");
-
-			VectorXd img = testingImages.col(correct_matches[i].first);
-			write(out, img, header);
-		}
-#pragma omp for nowait
-		for (unsigned i = 0; i < 3; i++) {
-			std::ofstream out(arg.outDir + "incorrect-" + std::to_string(i + 1) + "-train.pgm");
-
-			VectorXd img = U * projectedTrainingImages.col(incorrect_matches[i].second);
-			normalize(img, header);
-			write(out, img, header);
-		}
-#pragma omp for
-		for (unsigned i = 0; i < 3; i++) {
-			std::ofstream out(arg.outDir + "incorrect-" + std::to_string(i + 1) + "-test.pgm");
-
-			VectorXd img = testingImages.col(incorrect_matches[i].first);
-			write(out, img, header);
-		}
+		std::cout << arg.outDir << std::endl;
+		std::cout << "Correct Matches: test_image train_image" << std::endl;
+		unsigned c = 0;
+		for (unsigned i = 0; i < testingImages.size(); i++)
+			if (std::count(trainingLabels.begin(), trainingLabels.end(), trainingLabels[correct_matches[i].second]) == 1)
+			{
+				std::cout << testingImagePaths[correct_matches[i].first] << " " << trainingLabels[correct_matches[i].second] << std::endl;
+				if (++c == 3)
+					break;
+			}
+		if (c != 3)
+			std::cout << "Unable to find 3 unique matches" << std::endl;
+		c = 0;
+		std::cout << "Incorrect Matches: test_image train_image" << std::endl;
+		for (unsigned i = 0; i < testingImages.size(); i++)
+			if (std::count(trainingLabels.begin(), trainingLabels.end(), trainingLabels[incorrect_matches[i].second]) == 1)
+			{
+				std::cout << testingImagePaths[incorrect_matches[i].first] << " " << trainingLabels[incorrect_matches[i].second] << std::endl;
+				if (++c == 3)
+					break;
+			}
+		if (c != 3)
+			std::cout << "Unable to find 3 unique matches" << std::endl;
 	}
 }
 
