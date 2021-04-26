@@ -115,6 +115,12 @@ void test(Arguments& arg) {
 
 	readInImages(testingImagePaths, testingImages, testingLabels, header);
 
+
+    if(arg.intruderPlotFile.is_open() && arg.intruderPlotFile) {
+		std::cout << "Intruder mode detected - setting information retention to 95%\n";
+		arg.infoPercent = 0.95;
+	}
+
 	double totalEigenSum     = eigenValues.sum();
 	double targetEigenSum    = totalEigenSum * arg.infoPercent;
 	unsigned lowerDimensions = 0;
@@ -141,6 +147,7 @@ void test(Arguments& arg) {
 	std::vector<std::string> classifiedLabels(testingImages.cols());
 	std::vector<unsigned> bestTrainingImages(testingImages.cols());
 	std::vector<std::pair<double, bool>> e_k(testingImages.cols());
+
 
 #pragma omp parallel
 	{
