@@ -76,15 +76,21 @@ out/intruder-%.dat: ExperimentA/experiment out/training-intruder-%.dat
 	    -int $@
 
 .SECONDEXPANSION:
-out/compare-%.pdf: ExperimentA/plot.plt out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 2,$$(subst -, ,$$*)).dat out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 3,$$(subst -, ,$$*)).dat out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 4,$$(subst -, ,$$*)).dat
+out/compare-%.pdf: ExperimentA/plot.plt\
+                   out/cmc-H-$$(word 1,$$(subst -, ,$$*)).dat out/cmc-H-$$(word 2,$$(subst -, ,$$*)).dat out/cmc-H-$$(word 3,$$(subst -, ,$$*)).dat\
+				   out/cmc-L-$$(word 1,$$(subst -, ,$$*)).dat out/cmc-L-$$(word 2,$$(subst -, ,$$*)).dat out/cmc-L-$$(word 3,$$(subst -, ,$$*)).dat
 	gnuplot -e "outfile='$@'"\
-	        -e "infile1='out/cmc-$(word 1,$(subst -, ,$*))-$(word 2,$(subst -, ,$*)).dat'"\
-	        -e "infile2='out/cmc-$(word 1,$(subst -, ,$*))-$(word 3,$(subst -, ,$*)).dat'"\
-	        -e "infile3='out/cmc-$(word 1,$(subst -, ,$*))-$(word 4,$(subst -, ,$*)).dat'"\
-	        -e "title1='$(word 2,$(subst -, ,$*))%'"\
-	        -e "title2='$(word 3,$(subst -, ,$*))%'"\
-	        -e "title3='$(word 4,$(subst -, ,$*))%'"\
-	        -e "dataSet='$(word 1,$(subst -, ,$*))'"\
+	        -e "infile1='out/cmc-H-$(word 1,$(subst -, ,$*)).dat'"\
+	        -e "infile2='out/cmc-H-$(word 2,$(subst -, ,$*)).dat'"\
+	        -e "infile3='out/cmc-H-$(word 3,$(subst -, ,$*)).dat'"\
+	        -e "infile4='out/cmc-L-$(word 1,$(subst -, ,$*)).dat'"\
+	        -e "infile5='out/cmc-L-$(word 2,$(subst -, ,$*)).dat'"\
+	        -e "infile6='out/cmc-L-$(word 3,$(subst -, ,$*)).dat'"\
+			-e "title1='High Resolution Data Set'"\
+			-e "title2='Low Resolution Data Set'"\
+	        -e "key1='$(word 1,$(subst -, ,$*))%'"\
+	        -e "key2='$(word 2,$(subst -, ,$*))%'"\
+	        -e "key3='$(word 3,$(subst -, ,$*))%'"\
 	        ExperimentA/plot.plt
 
 out/intruders.pdf: ExperimentA/intruder.plt out/intruder-H.dat out/intruder-L.dat
@@ -96,7 +102,7 @@ out/intruders.pdf: ExperimentA/intruder.plt out/intruder-H.dat out/intruder-L.da
 	        ExperimentA/intruder.plt
 
 # Figures needed for the report
-report: out/mean-H.png out/compare-H-80-90-95.pdf out/mean-L.png out/compare-L-80-90-95.pdf out/intruders.pdf
+report: out/mean-H.png out/compare-80-90-95.pdf out/intruders.pdf
 report: out/correct-incorrect-H.txt out/correct-incorrect-L.txt
 # Correctly and incorrectly classified images, respectively
 report: Images/fa_H/00261_940128_fa.png Images/fa_H/00863_940307_fa.png Images/fa_H/01001_960627_fa.png Images/fa_L/00261_940128_fa.png Images/fa_L/00863_940307_fa.png Images/fa_L/01001_960627_fa.png
