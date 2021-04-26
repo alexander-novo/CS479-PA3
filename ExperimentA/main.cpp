@@ -3,7 +3,6 @@
 int main(int argc, char** argv) {
 	int err;
 	Arguments arg;
-
 	if (!verifyArguments(argc, argv, arg, err)) { return err; }
 
 	switch (arg.mode) {
@@ -20,6 +19,7 @@ int main(int argc, char** argv) {
 }
 
 void train(Arguments& arg) {
+
 	std::vector<std::filesystem::path> imagePaths;
 
 	getFilesPathsInDir(imagePaths, arg.imageDir);
@@ -135,6 +135,9 @@ void test(Arguments& arg) {
 	std::vector<std::string> classifiedLabels(testingImages.cols());
 	std::vector<unsigned> bestTrainingImages(testingImages.cols());
 
+    // Store intruders vs non-intruders
+	std::vector<std::pair<double, bool>> e_k;
+
 #pragma omp parallel
 	{
 		std::vector<DistanceLabel> heap(MAX_N);
@@ -168,7 +171,6 @@ void test(Arguments& arg) {
 
 			classifiedLabels[i]   = trainingLabels[heap[0].second];
 			bestTrainingImages[i] = heap[0].second;
-
 			unsigned j;
 			for (j = 0; j < heap.size(); j++) {
 				if (trainingLabels[heap[j].second] == testingLabels[i]) {
@@ -177,9 +179,47 @@ void test(Arguments& arg) {
 				}
 			}
 
-			if (j == heap.size()) { NRequired[i] = MAX_N + 1; }
+				if (NRequired[i] < heap.size()) {
+					std::pair<double, bool> entry(heap[0].second, false);  // Not an intruder
+					e_k.emplace_back(entry);
+				}
+
+				if (j == heap.size()) {
+					NRequired[i] = MAX_N + 1;
+
+					// Check to see if label is in training labels - if not, then intruder!
+					bool inTraining = false;
+					for (std::string label : trainingLabels) {
+						if (classifiedLabels[i] == label) {
+							{
+								std::pair<double, bool> entry(heap[0].second, false);  // Not an intruder
+								e_k.emplace_back(entry);
+								inTraining = true;
+								break;
+							}
+						}
+					}
+
+					if (!inTraining) {
+						// Intruder! Intruder!
+						std::pair<double, bool> entry(heap[0].second, true);
+						e_k.emplace_back(entry);
+					}
+				}
+			}
 		}
+
+	std::sort(e_k.begin(), e_k.end());
+	// FOR DEBUGGING: SEE OUR E_K VECTOR
+	for (std::pair<double, bool> & entry : e_k)
+    {
+		std::cout << "front of heap: " << std::get<0>(entry) << "\n"
+		          << "is intruder: " << std::boolalpha << std::get<1>(entry) << "\n";
+
 	}
+
+	// END DEBUGGING
+
 
 	// Store correctly and incorrectly matched query images for which N = 1
 	for (unsigned i = 0; i < testingImages.cols(); ++i) {
@@ -464,7 +504,8 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					}
 
 					i++;
-				} else if (!strcmp(argv[i], "-eig")) {
+				}
+				else if (!strcmp(argv[i], "-eig")) {
 					if (i + 1 >= argc) {
 						std::cout << "Missing eigenface output prefix.\n\n";
 						err = 1;
@@ -475,7 +516,9 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					arg.outDir = argv[i + 1];
 
 					i++;
-				} else {
+				}
+
+				else {
 					std::cout << "Unrecognised argument \"" << argv[i] << "\".\n";
 					printHelp();
 					err = 1;
@@ -501,7 +544,8 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					}
 
 					i++;
-				} else if (!strcmp(argv[i], "-i")) {
+				}
+				else if (!strcmp(argv[i], "-i")) {
 					if (i + 1 >= argc) {
 						std::cout << "Missing information percentage.\n\n";
 						err = 1;
@@ -522,7 +566,20 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					}
 
 					i++;
-				} else if (!strcmp(argv[i], "-img")) {
+				}
+                else if (!strcmp(argv[i], "-t")){
+                    if (i + 1 >= argc){
+                        std::cout << "Missing threshold value.\n\n";
+                        err = 1;
+                        printHelp();
+                        return false;
+                    }
+					char* end;
+					arg.threshold = strtod(argv[i+1], &end);
+					i++;
+                }
+
+				else if (!strcmp(argv[i], "-img")) {
 					if (i + 1 >= argc) {
 						std::cout << "Missing output image prefix.\n\n";
 						err = 1;
@@ -533,7 +590,10 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					arg.outDir = argv[i + 1];
 
 					i++;
-				} else {
+				}
+
+
+				else {
 					std::cout << "Unrecognised argument \"" << argv[i] << "\".\n";
 					printHelp();
 					err = 1;
@@ -547,14 +607,14 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 
 void printHelp() {
 	Arguments arg;
-	std::cout << "Usage: experiment train <train-dir> <output-file>                              (1)\n"
-	          << "   or: experiment info  <training-file> [options]                              (2)\n"
-	          << "   or: experiment test  <test-dir>  <training-file> [options]                  (3)\n"
-	          << "   or: experiment -h                                                           (4)\n\n"
-	          << "(1) Train the experiment using the images from the given directory.\n"
+	std::cout << "Usage: experiment.exe train <train-dir> <output-file>                              (1)\n"
+	          << "   or: experiment.exe info  <training-file> [options]                              (2)\n"
+	          << "   or: experiment.exe test  <test-dir>  <training-file> [options]                  (3)\n"
+	          << "   or: experiment.exe -h                                                           (4)\n\n"
+	          << "(1) Train the experiment.exe using the images from the given directory.\n"
 	          << "    Then output training data to a file to be used later for testing.\n"
 	          << "(2) Query information from the training data.\n"
-	          << "(3) Perform the experiment using the given training data (generated using (1))\n"
+	          << "(3) Perform the experiment.exe using the given training data (generated using (1))\n"
 	          << "    and test against images from the given directory.\n"
 	          << "(4) Print this help menu.\n\n"
 	          << "INFO OPTIONS\n"
@@ -567,5 +627,10 @@ void printHelp() {
 	          << "  -i   <num>   The percentage of information to be preserved when picking\n"
 	          << "               eigenfaces. Defaults to " << arg.infoPercent * 100 << "%.\n"
 	          << "  -img <pre>   Output images which were classified correctly and incorrectly\n"
-	          << "               with the given prefix.\n";
+	          << "               with the given prefix.\n"
+	          << "  -t <threshold> For experiment b, the threshold value at which we should be rejecting faces";
 }
+
+
+//Experiment 3 Implementations
+

@@ -9,6 +9,10 @@
 #include <regex>
 #include <string>
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <bits/stdc++.h>
+
 #include "../Common/image.h"
 
 #define EIGEN_PRESERVE .8
@@ -16,13 +20,13 @@
 #pragma omp declare reduction(+ : VectorXd : omp_out += omp_in) initializer(omp_priv = omp_orig)
 
 enum OperatingMode { Training, Testing, Information };
-
 struct Arguments {
 	OperatingMode mode;
 	std::ofstream meanFile, cmcPlotFile;
 	std::fstream trainingFile;
 	std::string imageDir, outDir;
 	double infoPercent = .8;
+	double threshold = DBL_MAX;
 };
 
 void train(Arguments& arg);
@@ -41,3 +45,5 @@ double mahalanobisDistance(Eigen::Block<T, -1, 1> im1, Eigen::Block<U, -1, 1> im
                            Eigen::VectorBlock<VectorXd> eigenValues);
 bool verifyArguments(int argc, char** argv, Arguments& arg, int& err);
 void printHelp();
+
+//Functions for experiment.exe b:
