@@ -96,4 +96,118 @@ The first widely successful method of solving the facial recognition problem is 
 \section{Implementation}
 \section{Results and Discussion}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.4\textwidth]{../out/mean-H} \quad
+	\includegraphics[width=.4\textwidth]{../out/mean-L}
+	\caption{The sample mean face for the high resolution data set and the low resolution data set, respectiely.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-1}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-2}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-3}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-4}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-5}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-6}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-7}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-8}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-9}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-largest-10}\\
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-1}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-2}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-3}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-4}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-5}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-6}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-7}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-8}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-9}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-H-smallest-10}
+	\caption{The 10 largest eigenfaces in decreasing order for the high resolution data set, followed by the 10 smallest eigenfaces in increasing order.}
+	\label{fig:largest-eigen-high-res}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-1}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-2}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-3}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-4}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-5}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-6}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-7}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-8}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-9}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-largest-10}\\
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-1}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-2}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-3}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-4}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-5}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-6}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-7}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-8}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-9}
+	\includegraphics[width=.09\textwidth]{../out/eigenface-L-smallest-10}
+	\caption{The same figure as \cref{fig:largest-eigen-high-res}, but for the low resolution data set.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.9\textwidth]{../out/compare-H-80-90-95}
+	\caption{A comparison of classification accuracy of the high resolution images against number of images considered ($N$) and the percentage of information preserved by eigenfaces.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.9\textwidth]{../out/compare-L-80-90-95}
+	\caption{A comparison of classification accuracy of the high resolution images against number of images considered ($N$) and the percentage of information preserved by eigenfaces.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.25\textwidth]{../Images/fb_H/01001_960627_fb}
+	\includegraphics[width=.25\textwidth]{../Images/fb_H/00261_940128_fb}
+	\includegraphics[width=.25\textwidth]{../Images/fb_H/00863_940307_fb}\\
+	\includegraphics[width=.25\textwidth]{../Images/fa_H/01001_960627_fa}
+	\includegraphics[width=.25\textwidth]{../Images/fa_H/00261_940128_fa}
+	\includegraphics[width=.25\textwidth]{../Images/fa_H/00863_940307_fa}
+	\caption{Three high-resolution test images (top) and the training images they were correctly matched against (bottom).}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.25\textwidth]{../Images/fb_L/01001_960627_fb}
+	\includegraphics[width=.25\textwidth]{../Images/fb_L/00261_940128_fb}
+	\includegraphics[width=.25\textwidth]{../Images/fb_L/00863_940307_fb}\\
+	\includegraphics[width=.25\textwidth]{../Images/fa_L/01001_960627_fa}
+	\includegraphics[width=.25\textwidth]{../Images/fa_L/00261_940128_fa}
+	\includegraphics[width=.25\textwidth]{../Images/fa_L/00863_940307_fa}
+	\caption{Three low-resolution test images (top) and the training images they were correctly matched against (bottom).}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.25\textwidth]{../Images/fb_H/00556_940519_fb}
+	\includegraphics[width=.25\textwidth]{../Images/fb_H/00212_940128_fb_a}
+	\includegraphics[width=.25\textwidth]{../Images/fb_H/00695_941121_fb}\\
+	\includegraphics[width=.25\textwidth]{../Images/fa_H/00557_940519_fa}
+	\includegraphics[width=.25\textwidth]{../Images/fa_H/00266_940128_fa}
+	\includegraphics[width=.25\textwidth]{../Images/fa_H/01005_960627_fa}
+	\caption{Three high-resolution test images (top) and the training images they were incorrectly matched against (bottom).}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.25\textwidth]{../Images/fb_L/00770_960530_fb_a}
+	\includegraphics[width=.25\textwidth]{../Images/fb_L/00212_940128_fb_a}
+	\includegraphics[width=.25\textwidth]{../Images/fb_L/00695_941121_fb}\\
+	\includegraphics[width=.25\textwidth]{../Images/fa_L/00494_940519_fa}
+	\includegraphics[width=.25\textwidth]{../Images/fa_L/00266_940128_fa}
+	\includegraphics[width=.25\textwidth]{../Images/fa_L/00968_960627_fa}
+	\caption{Three low-resolution test images (top) and the training images they were incorrectly matched against (bottom).}
+\end{figure}
+
 \end{document}
