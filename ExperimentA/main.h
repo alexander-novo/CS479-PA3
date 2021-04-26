@@ -19,7 +19,7 @@ enum OperatingMode { Training, Testing, Information };
 
 struct Arguments {
 	OperatingMode mode;
-	std::ofstream meanFile, cmcPlotFile;
+	std::ofstream meanFile, cmcPlotFile, intruderPlotFile;
 	std::fstream trainingFile;
 	std::string imageDir, outDir;
 	double infoPercent      = .8;

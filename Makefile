@@ -40,6 +40,9 @@ ExperimentA/experiment: $(OBJDIR)/ExperimentA/main.o $(OBJDIR)/Common/image.o
 out/training-%.dat: ExperimentA/experiment | out
 	ExperimentA/experiment train Images/fa_$* $@
 
+out/training-intruder-%.dat: ExperimentA/experiment | out
+	ExperimentA/experiment train Images/fa2_$* $@
+
 out/mean-%.pgm: ExperimentA/experiment out/training-%.dat
 	ExperimentA/experiment info out/training-$*.dat -m $@
 
@@ -64,6 +67,13 @@ out/correct-incorrect-%.txt: ExperimentA/experiment out/training-%.dat
 		-c -inc\
 		>> $@
 
+out/intruder-%.dat: ExperimentA/experiment out/training-intruder-%.dat
+	ExperimentA/experiment\
+		test\
+		Images/fb_$*\
+		out/training-intruder-$*.dat\
+		-int $@
+
 .SECONDEXPANSION:
 out/compare-%.pdf: ExperimentA/plot.plt out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 2,$$(subst -, ,$$*)).dat out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 3,$$(subst -, ,$$*)).dat out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 4,$$(subst -, ,$$*)).dat
 	gnuplot -e "outfile='$@'"\
@@ -76,8 +86,14 @@ out/compare-%.pdf: ExperimentA/plot.plt out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(
 			-e "dataSet='$(word 1,$(subst -, ,$*))'"\
 	        ExperimentA/plot.plt
 
+out/intruders-%.pdf: ExperimentA/intruder.plt out/intruder-%.dat
+	gnuplot -e "outfile='$@'"\
+	        -e "infile='out/intruder-$*.dat'"\
+			-e "dataSet='$*'"\
+			ExperimentA/intruder.plt
+
 # Figures needed for the report
-report: out/mean-H.png out/compare-H-80-90-95.pdf out/mean-L.png out/compare-L-80-90-95.pdf
+report: out/mean-H.png out/compare-H-80-90-95.pdf out/mean-L.png out/compare-L-80-90-95.pdf out/intruders-H.pdf out/intruders-L.pdf
 report: out/correct-incorrect-H.txt out/correct-incorrect-L.txt
 # Correctly and incorrectly classified images, respectively
 report: Images/fa_H/00261_940128_fa.png Images/fa_H/00863_940307_fa.png Images/fa_H/01001_960627_fa.png Images/fa_L/00261_940128_fa.png Images/fa_L/00863_940307_fa.png Images/fa_L/01001_960627_fa.png

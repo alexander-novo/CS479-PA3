@@ -53,6 +53,12 @@ void train(Arguments& arg) {
 	MatrixXd projectedImages = U.transpose() * (images.colwise() - mean);
 
 	writeTrainingData(arg.trainingFile, header, mean, U, solver.eigenvalues(), projectedImages, labels);
+
+	// For finding the first 50 subjects
+	// std::sort(labels.begin(), labels.end());
+	// std::unique(labels.begin(), labels.end());
+
+	// for (unsigned i = 0; i < 50; i++) { std::cout << labels[i] << '\n'; }
 }
 
 void info(Arguments& arg) {
@@ -134,6 +140,7 @@ void test(Arguments& arg) {
 	std::vector<unsigned> NRequired(projectedTestingImages.cols());
 	std::vector<std::string> classifiedLabels(testingImages.cols());
 	std::vector<unsigned> bestTrainingImages(testingImages.cols());
+	std::vector<std::pair<double, bool>> e_k(testingImages.cols());
 
 #pragma omp parallel
 	{
@@ -173,11 +180,17 @@ void test(Arguments& arg) {
 			for (j = 0; j < heap.size(); j++) {
 				if (trainingLabels[heap[j].second] == testingLabels[i]) {
 					NRequired[i] = j + 1;
+					e_k[i]       = {heap.front().first, false};
 					break;
 				}
 			}
 
-			if (j == heap.size()) { NRequired[i] = MAX_N + 1; }
+			if (j == heap.size()) {
+				NRequired[i] = MAX_N + 1;
+				e_k[i]       = {heap.front().first,
+                          !std::any_of(trainingLabels.begin(), trainingLabels.end(),
+                                       [&testingLabels, i](std::string& label) { return label == testingLabels[i]; })};
+			}
 		}
 	}
 
@@ -202,6 +215,25 @@ void test(Arguments& arg) {
 			                << '\n';
 		}
 		arg.cmcPlotFile.close();
+	}
+
+	if (arg.intruderPlotFile.is_open() && arg.intruderPlotFile) {
+		unsigned falsePositives = 0, truePositives = 0;
+
+		std::sort(e_k.begin(), e_k.end());
+
+		arg.intruderPlotFile << "# Threshold FalsePositives TruePositives\n";
+
+		for (auto& e : e_k) {
+			if (e.second) {
+				falsePositives++;
+			} else {
+				truePositives++;
+			}
+
+			arg.intruderPlotFile << std::setw(5) << e.first << std::setw(5) << falsePositives << std::setw(5)
+			                     << truePositives << '\n';
+		}
 	}
 
 	if (arg.printCorrectImages) {
@@ -529,6 +561,22 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					arg.printCorrectImages = true;
 				} else if (!strcmp(argv[i], "-inc")) {
 					arg.printIncorrectImages = true;
+				} else if (!strcmp(argv[i], "-int")) {
+					if (i + 1 >= argc) {
+						std::cout << "Missing intruder plot file.\n\n";
+						err = 1;
+						printHelp();
+						return false;
+					}
+
+					arg.intruderPlotFile.open(argv[i + 1]);
+					if (!arg.intruderPlotFile.is_open() || !arg.intruderPlotFile) {
+						std::cout << "Could not open file \"" << argv[i + 1] << "\".\n";
+						err = 2;
+						return false;
+					}
+
+					i++;
 				} else {
 					std::cout << "Unrecognised argument \"" << argv[i] << "\".\n";
 					printHelp();
@@ -565,5 +613,7 @@ void printHelp() {
 	          << "  -img <pre>   Output images which were classified correctly and incorrectly\n"
 	          << "               with the given prefix.\n"
 	          << "  -c           If enabled, print the labels of 3 correctly classified images.\n"
-	          << "  -inc         If enabled, print the labels of 3 incorrectly classified images.\n";
+	          << "  -inc         If enabled, print the labels of 3 incorrectly classified images.\n"
+	          << "  -int <file>  Attempt to detect intruders and send false positive plot data\n"
+	          << "               to a file.";
 }
