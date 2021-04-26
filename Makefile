@@ -72,6 +72,7 @@ out/intruder-%.dat: ExperimentA/experiment out/training-intruder-%.dat
 		test\
 		Images/fb_$*\
 		out/training-intruder-$*.dat\
+		-i 95\
 		-int $@
 
 .SECONDEXPANSION:
@@ -86,10 +87,12 @@ out/compare-%.pdf: ExperimentA/plot.plt out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(
 			-e "dataSet='$(word 1,$(subst -, ,$*))'"\
 	        ExperimentA/plot.plt
 
-out/intruders-%.pdf: ExperimentA/intruder.plt out/intruder-%.dat
+out/intruders.pdf: ExperimentA/intruder.plt out/intruder-H.dat out/intruder-L.dat
 	gnuplot -e "outfile='$@'"\
-	        -e "infile='out/intruder-$*.dat'"\
-			-e "dataSet='$*'"\
+	        -e "infile1='out/intruder-H.dat'"\
+			-e "infile2='out/intruder-L.dat'"\
+			-e "title1='H'"\
+			-e "title2='L'"\
 			ExperimentA/intruder.plt
 
 # Figures needed for the report

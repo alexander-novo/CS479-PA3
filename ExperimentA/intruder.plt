@@ -7,9 +7,16 @@ set output outfile
 
 set xlabel 'False Positives'
 set ylabel 'True Positives'
-set title sprintf("Intruder ROC curve on %s-resolution images", dataSet)
+set key inside center right title 'Resolution' 
+set title "Comparison of intruder ROC curves"
 
-stats infile u 2 prefix 'A'
-stats infile u 3 prefix 'B'
+set offsets 0.1,0,0.1,0
+set autoscale fix
 
-plot infile u ($2/A_max):($3/B_max) w lines notitle
+stats infile1 u 2 prefix 'A1'
+stats infile1 u 3 prefix 'B1'
+stats infile2 u 2 prefix 'A2'
+stats infile2 u 3 prefix 'B2'
+
+plot infile1 u ($2/A1_max):($3/B1_max) w lines title title1,\
+     infile2 u ($2/A2_max):($3/B2_max) w lines title title2,\
