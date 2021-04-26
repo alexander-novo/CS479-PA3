@@ -183,7 +183,7 @@ void test(Arguments& arg) {
 
 	// Store correctly and incorrectly matched query images for which N = 1
 	for (unsigned i = 0; i < testingImages.cols(); ++i) {
-		if (classifiedLabels[i] == testingLabels[i]) {
+		if (NRequired[i] == 1) {
 			correct_matches.push_back({i, bestTrainingImages[i]});
 		} else {
 			incorrect_matches.push_back({i, bestTrainingImages[i]});
@@ -204,37 +204,36 @@ void test(Arguments& arg) {
 		arg.cmcPlotFile.close();
 	}
 
-#pragma omp critical
-	{
-		std::cout << arg.outDir << std::endl;
+	if (arg.printCorrectImages) {
 		std::cout << "Correct Matches: test_image train_image" << std::endl;
 		unsigned c = 0;
-		for (unsigned i = 0; i < testingImages.size(); i++)
-			if (std::count(trainingLabels.begin(), trainingLabels.end(), trainingLabels[correct_matches[i].second]) == 1)
-			{
-				std::cout << testingImagePaths[correct_matches[i].first] << " " << trainingLabels[correct_matches[i].second] << std::endl;
-				if (++c == 3)
-					break;
+		for (unsigned i = 0; i < testingImages.size() && c < PRINT_CORRECT_IMAGES_NUM; i++) {
+			if (std::count(trainingLabels.begin(), trainingLabels.end(), trainingLabels[correct_matches[i].second]) ==
+			    1) {
+				std::cout << testingImagePaths[correct_matches[i].first] << " "
+				          << trainingLabels[correct_matches[i].second] << std::endl;
+				c++;
 			}
-		if (c != 3)
-			std::cout << "Unable to find 3 unique matches" << std::endl;
-		c = 0;
+		}
+	}
+
+	if (arg.printIncorrectImages) {
 		std::cout << "Incorrect Matches: test_image train_image" << std::endl;
-		for (unsigned i = 0; i < testingImages.size(); i++)
-			if (std::count(trainingLabels.begin(), trainingLabels.end(), trainingLabels[incorrect_matches[i].second]) == 1)
-			{
-				std::cout << testingImagePaths[incorrect_matches[i].first] << " " << trainingLabels[incorrect_matches[i].second] << std::endl;
-				if (++c == 3)
-					break;
+		unsigned c = 0;
+		for (unsigned i = 0; i < testingImages.size() && c < PRINT_CORRECT_IMAGES_NUM; i++) {
+			if (std::count(trainingLabels.begin(), trainingLabels.end(), trainingLabels[incorrect_matches[i].second]) ==
+			    1) {
+				std::cout << testingImagePaths[incorrect_matches[i].first] << " "
+				          << trainingLabels[incorrect_matches[i].second] << std::endl;
+				c++;
 			}
-		if (c != 3)
-			std::cout << "Unable to find 3 unique matches" << std::endl;
+		}
 	}
 }
 
 void getFilesPathsInDir(std::vector<std::filesystem::path>& paths, const std::string& dir) {
 	for (auto& p : std::filesystem::directory_iterator(dir)) {
-		if (!p.is_regular_file()) continue;
+		if (!p.is_regular_file() || p.path().extension() != ".pgm") continue;
 
 		paths.push_back(p.path());
 	}
@@ -526,6 +525,10 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					arg.outDir = argv[i + 1];
 
 					i++;
+				} else if (!strcmp(argv[i], "-c")) {
+					arg.printCorrectImages = true;
+				} else if (!strcmp(argv[i], "-inc")) {
+					arg.printIncorrectImages = true;
 				} else {
 					std::cout << "Unrecognised argument \"" << argv[i] << "\".\n";
 					printHelp();
@@ -560,5 +563,7 @@ void printHelp() {
 	          << "  -i   <num>   The percentage of information to be preserved when picking\n"
 	          << "               eigenfaces. Defaults to " << arg.infoPercent * 100 << "%.\n"
 	          << "  -img <pre>   Output images which were classified correctly and incorrectly\n"
-	          << "               with the given prefix.\n";
+	          << "               with the given prefix.\n"
+	          << "  -c           If enabled, print the labels of 3 correctly classified images.\n"
+	          << "  -inc         If enabled, print the labels of 3 incorrectly classified images.\n";
 }

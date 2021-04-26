@@ -7,19 +7,12 @@
 \usepackage[headsepline]{scrlayer-scrpage}
 \usepackage[USenglish]{babel}
 \usepackage{hyperref}
-%\usepackage{xurl}
 \usepackage{graphicx}
 \usepackage{float}
-\usepackage{subcaption}
 \usepackage{physics}
-\usepackage[makeroom]{cancel}
 \usepackage[format=hang, justification=justified]{caption}
-\usepackage{subcaption}
-\usepackage{listings}
-\usepackage{booktabs}
-\usepackage{catchfile}
-\usepackage{makecell}
 \usepackage{xcolor}
+\usepackage{mathbbol}
 
 \usepackage{cleveref} % Needs to be loaded last
 
@@ -28,15 +21,7 @@
 	pdfborder = {0 0 .5 [ 1 3 ]}
 }
 
-\definecolor{lightgray}{gray}{0.97}
-\lstdefinestyle{out}{
-	basicstyle=\fontsize{9}{11}\ttfamily,
-	tabsize=4,
-	backgroundcolor=\color{lightgray},
-	morecomment=[l][\color{OliveGreen}]{\#},
-	numbers=none
-}
-
+\def \reals {\mathbb{R}}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
 
@@ -45,8 +30,8 @@
 \lohead{CS 479 Programming Assignment 3}
 
 \title{Programming Assignment 3}
-\subtitle{CS 479\\\url{https://github.com/alexander-novo/CS479-PA2}}
-\author{Nikhil Khedekar\\--\% \and Mehar Mangat\\--\% \and Alexander Novotny\\--\%}
+\subtitle{CS 479\\\url{https://github.com/alexander-novo/CS479-PA3}}
+\author{Nikhil Khedekar\\33\%\\\Cref{sec:part-3} \and Mehar Mangat\\33\%\\\Cref{sec:part-3} \and Alexander Novotny\\33\%\\\Cref{sec:part-1}}
 \date{Due: April 26, 2021 \\ Submitted: \today}
 
 \begin{document}
@@ -58,33 +43,57 @@
 \pagenumbering{arabic}
 
 %%%%%%%%%%%%%%%%%%%%%%
-\section{Parts 1 \& 2}
-\label{sec:part-1}
 
-\subsection{Theory}
+\section{Theory}
 
+This assignment considers the usage of Principal Component Analysis for dimensionality reduction for a dataset of images for the purpose of face recognition. 
 
-\subsection{Implementation}
-\label{sec:part-1-impl}
-
-
-\subsection{Results and Discussion}
+\subsubsection{Principal Component Analysis (PCA)}
+Principal Component Analysis (PCA) is a method for reducing the dimensionality of high dimensional data while preserving as much information as possible. The way this works is by the projection of the sample data along its principal distribution directions. Intuitively, this can be understood by finding the directions that capture the highest variance of the data and projecting the data along these directions as seen for a 2D to 1D case in. 
 
 
+For some given sample data $\mathbf{X} = \{\vec x_i \in \reals^N, 1 \leq i \leq M\}$, where $M$ is the number of samples in the data set, the sample covariance matrix $\Sigma_x$ can be found using \cref{eq:mean} and \cref{eq:cov_mat}, where $\Bar{x}$ is the sample mean and $\Phi_i$ are the normalized data points:
 
-%%%%%%%%%%%%%%%%%%%%%%
-\section{Part 3}
-\label{sec:part-3}
+\begin{equation} \label{eq:mean}
+    \mathbf{\Bar{x}} = \frac{1}{M}\sum_{i = 1}^{M}\mathbf{x}_i
+\end{equation}
 
-\subsection{Theory}
-\label{sec:part-3-theory}
+\begin{equation}
+    \mathbf{\Phi_i} = \mathbf{x}_i - \mathbf{\Bar{x}}
+\end{equation}
+
+\begin{equation} \label{eq:cov_mat}
+    \mathbf{\Sigma_x} = \frac{1}{M}\sum_{i = 1}^M(\mathbf{x} - \mathbf{\Bar{x}})(\mathbf{x} - \mathbf{\Bar{x}})^T = \frac{1}{M}\sum_{i = 1}^{M}\mathbf{\Phi}_i\mathbf{\Phi}_i^T 
+\end{equation}
+
+\Cref{eq:cov_mat} can be further simplified to \cref{eq:cov_mat_simp} using \cref{eq:a_mat}.
+
+\begin{equation}\label{eq:cov_mat_simp}
+    \mathbf{\Sigma_x} = \frac{1}{M}\mathbf{A}\mathbf{A}^T
+\end{equation}
+
+\begin{equation}\label{eq:a_mat}
+    \mathbf{A} = [\Phi_1 \Phi_2 ... \Phi_M]    
+\end{equation}
+
+The eigenvectors and eigenvalues of the covariance matrix have the special property that the eigenvectors form an orthogonal basis in $R^N$ for the sample data with the corresponding eigenvalues representing the variance of the data in these directions. The eigenvectors and corresponding eigenvalues are obtained using \cref{eq:eigenvec_and_eigenval}.
+
+\begin{equation}\label{eq:eigenvec_and_eigenval}
+    \mathbf{\Sigma_x}\mathbf{u_i} = \lambda_iu_i
+\end{equation}
+
+In our notation, we assume that the eigenvalues are indexed in descending order, namely, $\lambda_1 > \lambda_2 > ... > \lambda_N$. Using the eigenvectors as the new basis we can represent our data samples $\mathbf{x} \in \reals^N$ as:
+
+\begin{equation}
+    test
+\end{equation}
+
+\subsubsection{Eigenfaces and Facial Recognition}
+
+The first widely successful method of solving the facial recognition problem is the eigenface method. An eigenface
 
 
-\subsection{Implementation}
-\label{sec:part-3-impl}
-
-
-\subsection{Results and Discussion}
-
+\section{Implementation}
+\section{Results and Discussion}
 
 \end{document}

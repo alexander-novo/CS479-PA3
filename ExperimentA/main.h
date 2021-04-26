@@ -11,7 +11,7 @@
 
 #include "../Common/image.h"
 
-#define EIGEN_PRESERVE .8
+#define PRINT_CORRECT_IMAGES_NUM 3
 
 #pragma omp declare reduction(+ : VectorXd : omp_out += omp_in) initializer(omp_priv = omp_orig)
 
@@ -22,7 +22,8 @@ struct Arguments {
 	std::ofstream meanFile, cmcPlotFile;
 	std::fstream trainingFile;
 	std::string imageDir, outDir;
-	double infoPercent = .8;
+	double infoPercent      = .8;
+	bool printCorrectImages = false, printIncorrectImages = false;
 };
 
 void train(Arguments& arg);

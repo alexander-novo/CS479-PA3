@@ -15,6 +15,9 @@ out/
 
 *.o
 
-Images/*.png
+Images/fa_H/*.png
+Images/fa_L/*.png
+Images/fb_H/*.png
+Images/fb_L/*.png
 
 ExperimentA/experiment
