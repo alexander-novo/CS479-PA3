@@ -96,7 +96,7 @@ out/intruders.pdf: ExperimentA/intruder.plt out/intruder-H.dat out/intruder-L.da
 			ExperimentA/intruder.plt
 
 # Figures needed for the report
-report: out/mean-H.png out/compare-H-80-90-95.pdf out/mean-L.png out/compare-L-80-90-95.pdf out/intruders-H.pdf out/intruders-L.pdf
+report: out/mean-H.png out/compare-H-80-90-95.pdf out/mean-L.png out/compare-L-80-90-95.pdf out/intruders.pdf
 report: out/correct-incorrect-H.txt out/correct-incorrect-L.txt
 # Correctly and incorrectly classified images, respectively
 report: Images/fa_H/00261_940128_fa.png Images/fa_H/00863_940307_fa.png Images/fa_H/01001_960627_fa.png Images/fa_L/00261_940128_fa.png Images/fa_L/00863_940307_fa.png Images/fa_L/01001_960627_fa.png
