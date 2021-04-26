@@ -5,8 +5,8 @@ set terminal pdf enhanced size 4.8in, 4.8in
 set encoding utf8
 set output outfile
 
-set xlabel 'False Positives'
-set ylabel 'True Positives'
+set xlabel 'False Positive Rate'
+set ylabel 'True Positive Rate'
 set key inside center right title 'Resolution' 
 set title "Comparison of intruder ROC curves"
 

@@ -52,28 +52,28 @@ out/eigenface-%-largest-1.pgm out/eigenface-%-largest-2.pgm out/eigenface-%-larg
 .SECONDEXPANSION:
 out/cmc-%.dat: ExperimentA/experiment out/training-$$(word 1,$$(subst -, ,$$*)).dat
 	ExperimentA/experiment\
-		test\
-		Images/fb_$(word 1,$(subst -, ,$*))\
-		out/training-$(word 1,$(subst -, ,$*)).dat\
-		-i $(word 2,$(subst -, ,$*))\
-		-cmc $@\
-		-img out/classification-$*-\
+	    test\
+	    Images/fb_$(word 1,$(subst -, ,$*))\
+	    out/training-$(word 1,$(subst -, ,$*)).dat\
+	    -i $(word 2,$(subst -, ,$*))\
+	    -cmc $@\
+	    -img out/classification-$*-\
 
 out/correct-incorrect-%.txt: ExperimentA/experiment out/training-%.dat
 	ExperimentA/experiment\
-		test\
-		Images/fb_$*\
-		out/training-$*.dat\
-		-c -inc\
-		>> $@
+	    test\
+	    Images/fb_$*\
+	    out/training-$*.dat\
+	    -c -inc\
+	    >> $@
 
 out/intruder-%.dat: ExperimentA/experiment out/training-intruder-%.dat
 	ExperimentA/experiment\
-		test\
-		Images/fb_$*\
-		out/training-intruder-$*.dat\
-		-i 95\
-		-int $@
+	    test\
+	    Images/fb_$*\
+	    out/training-intruder-$*.dat\
+	    -i 95\
+	    -int $@
 
 .SECONDEXPANSION:
 out/compare-%.pdf: ExperimentA/plot.plt out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 2,$$(subst -, ,$$*)).dat out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 3,$$(subst -, ,$$*)).dat out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(word 4,$$(subst -, ,$$*)).dat
@@ -81,19 +81,19 @@ out/compare-%.pdf: ExperimentA/plot.plt out/cmc-$$(word 1,$$(subst -, ,$$*))-$$(
 	        -e "infile1='out/cmc-$(word 1,$(subst -, ,$*))-$(word 2,$(subst -, ,$*)).dat'"\
 	        -e "infile2='out/cmc-$(word 1,$(subst -, ,$*))-$(word 3,$(subst -, ,$*)).dat'"\
 	        -e "infile3='out/cmc-$(word 1,$(subst -, ,$*))-$(word 4,$(subst -, ,$*)).dat'"\
-			-e "title1='$(word 2,$(subst -, ,$*))%'"\
-			-e "title2='$(word 3,$(subst -, ,$*))%'"\
-			-e "title3='$(word 4,$(subst -, ,$*))%'"\
-			-e "dataSet='$(word 1,$(subst -, ,$*))'"\
+	        -e "title1='$(word 2,$(subst -, ,$*))%'"\
+	        -e "title2='$(word 3,$(subst -, ,$*))%'"\
+	        -e "title3='$(word 4,$(subst -, ,$*))%'"\
+	        -e "dataSet='$(word 1,$(subst -, ,$*))'"\
 	        ExperimentA/plot.plt
 
 out/intruders.pdf: ExperimentA/intruder.plt out/intruder-H.dat out/intruder-L.dat
 	gnuplot -e "outfile='$@'"\
 	        -e "infile1='out/intruder-H.dat'"\
-			-e "infile2='out/intruder-L.dat'"\
-			-e "title1='H'"\
-			-e "title2='L'"\
-			ExperimentA/intruder.plt
+	        -e "infile2='out/intruder-L.dat'"\
+	        -e "title1='H'"\
+	        -e "title2='L'"\
+	        ExperimentA/intruder.plt
 
 # Figures needed for the report
 report: out/mean-H.png out/compare-H-80-90-95.pdf out/mean-L.png out/compare-L-80-90-95.pdf out/intruders.pdf
