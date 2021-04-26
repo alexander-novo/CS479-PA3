@@ -26,7 +26,7 @@ struct Arguments {
 	std::fstream trainingFile;
 	std::string imageDir, outDir;
 	double infoPercent = .8;
-	double threshold = DBL_MAX;
+	std::string tfname = "";
 };
 
 void train(Arguments& arg);

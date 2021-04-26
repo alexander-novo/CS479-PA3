@@ -175,14 +175,12 @@ void test(Arguments& arg) {
 			for (j = 0; j < heap.size(); j++) {
 				if (trainingLabels[heap[j].second] == testingLabels[i]) {
 					NRequired[i] = j + 1;
-					break;
+                    std::pair<double, bool> entry(heap[0].first, false);  // Not an intruder
+					e_k.push_back(entry);
+                    break;
 				}
 			}
 
-				if (NRequired[i] < heap.size()) {
-					std::pair<double, bool> entry(heap[0].second, false);  // Not an intruder
-					e_k.emplace_back(entry);
-				}
 
 				if (j == heap.size()) {
 					NRequired[i] = MAX_N + 1;
@@ -192,8 +190,8 @@ void test(Arguments& arg) {
 					for (std::string label : trainingLabels) {
 						if (classifiedLabels[i] == label) {
 							{
-								std::pair<double, bool> entry(heap[0].second, false);  // Not an intruder
-								e_k.emplace_back(entry);
+								std::pair<double, bool> entry(heap[0].first, false);  // Not an intruder
+								e_k.push_back(entry);
 								inTraining = true;
 								break;
 							}
@@ -202,21 +200,48 @@ void test(Arguments& arg) {
 
 					if (!inTraining) {
 						// Intruder! Intruder!
-						std::pair<double, bool> entry(heap[0].second, true);
-						e_k.emplace_back(entry);
+						std::pair<double, bool> entry(heap[0].first, true);
+						e_k.push_back(entry);
 					}
 				}
 			}
 		}
+	 // If we in "intruder" mode:
+    if (arg.tfname != "") {
 
-	std::sort(e_k.begin(), e_k.end());
+		std::sort(e_k.begin(), e_k.end());
+		int fp = 0, tp = 0; //Only want these two for cmc files
+
+		std::ofstream outfile;
+		outfile.open(arg.tfname, std::ios::out | std::ios::trunc);
+
+		outfile << "#" << "FalsePositives \t TruePositives \t Threshold\n";
+
+		// Iterate through each value in e_k vector, which should contain all info for fp/tp/thresh
+		for (const auto & entry : e_k)
+        {
+			bool isIntruder = std::get<1>(entry);
+			if (isIntruder)
+				++fp;
+			else
+				++tp;
+
+
+			// Yes actually do this here Madi you sack of gravel
+			outfile  << fp << "\t" << tp << "\t" << std::get<0>(entry) << "\n";
+		}
+//        outfile << std::get<0>(entry) << "\t" << fp << "\t" << tp << "\n";
+
+    }
+
+
 	// FOR DEBUGGING: SEE OUR E_K VECTOR
-	for (std::pair<double, bool> & entry : e_k)
-    {
-		std::cout << "front of heap: " << std::get<0>(entry) << "\n"
-		          << "is intruder: " << std::boolalpha << std::get<1>(entry) << "\n";
-
-	}
+    //	for (std::pair<double, bool> & entry : e_k)
+    //    {
+    //		std::cout << "front of heap: " << std::get<0>(entry) << "\n"
+    //		          << "is intruder: " << std::boolalpha << std::get<1>(entry) << "\n";
+    //
+    //	}
 
 	// END DEBUGGING
 
@@ -569,13 +594,13 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 				}
                 else if (!strcmp(argv[i], "-t")){
                     if (i + 1 >= argc){
-                        std::cout << "Missing threshold value.\n\n";
+                        std::cout << "Missing threshold cmc file name.\n\n";
                         err = 1;
                         printHelp();
                         return false;
                     }
 					char* end;
-					arg.threshold = strtod(argv[i+1], &end);
+					arg.tfname = argv[i+1];
 					i++;
                 }
 
