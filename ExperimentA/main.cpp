@@ -50,7 +50,7 @@ void train(Arguments& arg) {
 
 	U.colwise().normalize();
 
-	MatrixXd projectedImages = U.transpose() * (images.colwise() - mean);
+	MatrixXd projectedImages = U.transpose() * A;
 
 	writeTrainingData(arg.trainingFile, header, mean, U, solver.eigenvalues(), projectedImages, labels);
 

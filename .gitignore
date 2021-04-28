@@ -12,6 +12,10 @@ out/
 *.lof
 *.fls
 *.fdb_latexmk
+*.bbl
+*.bcf
+*.blg
+*.run.xml
 
 *.o
 
