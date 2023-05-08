@@ -43,7 +43,7 @@ void train(Arguments& arg) {
 
 	MatrixXd A = images.colwise() - mean;
 
-	MatrixXd covariance = A.transpose() * A / images.size();
+	MatrixXd covariance = A.transpose() * A / images.cols();
 	Eigen::SelfAdjointEigenSolver<MatrixXd> solver(covariance);
 	// Multiply by A to get eigenvectors of A*A^T instead of A^T*A
 	MatrixXd U = A * solver.eigenvectors();
@@ -92,6 +92,13 @@ void info(Arguments& arg) {
 				write(out, img, header);
 			}
 		}
+	}
+
+	if (arg.print_eig_vals > 0) {
+		unsigned print = std::min(arg.print_eig_vals, (unsigned) eigenValues.rows());
+
+		std::cout << "Top " << print << " eigenvalues:\n"
+		          << std::scientific << eigenValues.bottomRows(print).reverse() << std::endl;
 	}
 }
 
@@ -188,8 +195,8 @@ void test(Arguments& arg) {
 			if (j == heap.size()) {
 				NRequired[i] = MAX_N + 1;
 				e_k[i]       = {heap.front().first,
-                          !std::any_of(trainingLabels.begin(), trainingLabels.end(),
-                                       [&testingLabels, i](std::string& label) { return label == testingLabels[i]; })};
+				                !std::any_of(trainingLabels.begin(), trainingLabels.end(),
+				                             [&testingLabels, i](std::string& label) { return label == testingLabels[i]; })};
 			}
 		}
 	}
@@ -488,6 +495,24 @@ bool verifyArguments(int argc, char** argv, Arguments& arg, int& err) {
 					}
 
 					i++;
+				} else if (!strcmp(argv[i], "-val")) {
+					if (i + 1 >= argc) {
+						std::cout << "Missing number of eigenvalues to print.\n\n";
+						err = 1;
+						printHelp();
+						return false;
+					}
+
+					char* end;
+					arg.print_eig_vals = strtoul(argv[i + 1], &end, 10);
+
+					if (end == argv[i + 1]) {
+						std::cout << "\"" << argv[i + 1] << "\" could not be interpreted as a non-negative integer.\n";
+						err = 2;
+						return false;
+					}
+
+					i++;
 				} else if (!strcmp(argv[i], "-eig")) {
 					if (i + 1 >= argc) {
 						std::cout << "Missing eigenface output prefix.\n\n";
@@ -603,6 +628,7 @@ void printHelp() {
 	          << "(4) Print this help menu.\n\n"
 	          << "INFO OPTIONS\n"
 	          << "  -m   <file>  Print the mean face to a file.\n"
+	          << "  -val <num>   Print the largest num eigenvalues.\n"
 	          << "  -eig <pre>   Output representative eigenfaces with a filename prefix of <pre>.\n"
 	          << "               For instance '-eig out/pre-' will output files like\n"
 	          << "               'out/pre-largest-1.pgm' and 'out/pre-smallest-1.pgm.\n\n"

@@ -30,8 +30,7 @@ stats infile6 u (100*$2) prefix 'F' nooutput
 Y_min = min(min(min(min(min(A_min, B_min), C_min), D_min), E_min), F_min)
 Y_max = max(max(max(max(max(A_max, B_max), C_max), D_max), E_max), F_max)
 
-set yrange [Y_min:Y_max]
-set offsets 0, 0, 3, 3
+set yrange [Y_min-3:Y_max+3]
 set key at graph .95,.66 center right title 'Information' box width 2
 
 Y_max = max(max(A_max, B_max), C_max)

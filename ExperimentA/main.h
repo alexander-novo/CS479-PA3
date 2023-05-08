@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Eigen>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -24,6 +25,7 @@ struct Arguments {
 	std::string imageDir, outDir;
 	double infoPercent      = .8;
 	bool printCorrectImages = false, printIncorrectImages = false;
+	unsigned print_eig_vals = 0;
 };
 
 void train(Arguments& arg);
